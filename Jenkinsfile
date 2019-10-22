@@ -1,18 +1,31 @@
 pipeline {
+    environment {
+        registry = 'kmitsunami/cicdpipeline'
+        registryCredential = 'dockerhub'
+    }
     agent any
     stages {
-        stage('Lint HTML') {
+        stage('Lint') {
             steps {
                 sh 'tidy -q -e src/*.html'
+                sh 'pylint --disable=R,C,W1203 app.py'
+                sh 'hadolint Dockerfile'
             }
         }
-        stage('echo scrip') {
+        stage('Build Docker') {
             steps {
-                sh 'echo "Hello World"'
-                sh '''
-                    echo "Multiline shell steps works too"
-                    ls -lah
-                '''
+                script {
+                    dockerImage = docker.build registry + ":$BUILD_NUMBER"
+                }
+            }
+        }
+        stage('Push Docker') {
+            steps {
+                script {
+                    docker.withRegistry('', registryCredential){
+                        dockerImage.push()
+                    }
+                }
             }
         }
     }

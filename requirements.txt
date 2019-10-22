@@ -1,0 +1,13 @@
+Flask
+pylint
+numpy
+Pillow
+cython
+matplotlib
+scikit-image
+tensorflow==1.13.1
+keras==2.2.4
+opencv-python
+h5py
+imgaug
+IPython[all]
