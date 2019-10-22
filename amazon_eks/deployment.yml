@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cicdpipeline-deployment
+  labels:
+    app: cicdpipeline
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cicdpipeline
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: cicdpipeline
+    spec:
+      containers:
+      - name: cicdpipeline
+        image: kmitsunami/cicdpipeline
+        ports:
+        - containerPort: 80
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            scheme: HTTP
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1

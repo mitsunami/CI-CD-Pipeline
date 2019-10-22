@@ -1,0 +1,1 @@
+kubectl set image deployment/cicdpipeline-deployment cicdpipeline=kmitsunami/cicdpipeline
