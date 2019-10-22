@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask.logging import create_logger
 import logging
 
@@ -10,6 +10,8 @@ import numpy as np
 import skimage.io
 import matplotlib
 import matplotlib.pyplot as plt
+import cv2
+import colorsys
 
 # Import Mask RCNN
 ROOT_DIR = os.path.abspath("./Mask_RCNN/")
@@ -65,6 +67,58 @@ app = Flask(__name__)
 LOG = create_logger(app)
 LOG.setLevel(logging.INFO)
 
+def random_colors(N, bright=True):
+    brightness = 1.0 if bright else 0.7
+    hsv = [(i / N, 1, brightness) for i in range(N)]
+    colors = list(map(lambda c: colorsys.hsv_to_rgb(*c), hsv))
+    random.shuffle(colors)
+    return colors
+
+def apply_mask(image, mask, color, alpha=0.5):
+    for c in range(3):
+        image[:, :, c] = np.where(mask == 1,
+                                    image[:, :, c] *
+                                    (1 - alpha) + alpha * color[c] * 255,
+                                    image[:, :, c])
+    return image
+
+def display_instances(image, boxes, masks, class_ids, class_names,
+                      scores=None, title="",
+                      figsize=(16, 16), ax=None):
+    N = boxes.shape[0]
+    if not N:
+        print("\n*** No instances to display *** \n")
+    else:
+        assert boxes.shape[0] == masks.shape[-1] == class_ids.shape[0]
+ 
+    colors = random_colors(N)
+ 
+    masked_image = image.copy()
+    for i in range(N):
+        color = colors[i]
+ 
+        # Bounding box
+        if not np.any(boxes[i]):
+            continue
+        y1, x1, y2, x2 = boxes[i]
+        camera_color = (color[0] * 255, color[1] * 255, color[2] * 255)
+        cv2.rectangle(masked_image, (x1, y1), (x2, y2), camera_color , 1)
+ 
+        # Label
+        class_id = class_ids[i]
+        score = scores[i] if scores is not None else None
+        label = class_names[class_id]
+        x = random.randint(x1, (x1 + x2) // 2)
+        caption = "{} {:.3f}".format(label, score) if score else label
+        camera_font = cv2.FONT_HERSHEY_PLAIN
+        cv2.putText(masked_image,caption,(x1, y1),camera_font, 1, camera_color)
+ 
+        # Mask
+        mask = masks[:, :, i]
+        masked_image = apply_mask(masked_image, mask, color)
+ 
+    return masked_image.astype(np.uint8)
+
 def scale(payload):
     """Scales Payload"""
     
@@ -79,29 +133,18 @@ def home():
     html = f"<h3>DeepLearning Object Detection</h3>"
     return html.format(format)
 
+@app.route('/showresult', methods = ['GET'])
+def showresult():
+    """/ Show result: /showresult"""
+    return render_template("index.html")
+
 @app.route("/predict", methods=['POST'])
 def predict():
     """Performs an sklearn prediction
         
         input looks like:
         {
-        "CHAS":{
-        "0":0
-        },
-        "RM":{
-        "0":6.575
-        },
-        "TAX":{
-        "0":296.0
-        },
-        "PTRATIO":{
-        "0":15.3
-        },
-        "B":{
-        "0":396.9
-        },
-        "LSTAT":{
-        "0":4.98
+        "IMAGE":{"0":1}
         }
         
         result looks like:
@@ -126,24 +169,34 @@ def predict():
     return jsonify({'prediction': prediction})
     """
 
+    # Logging the input payload
+    json_payload = request.json
+    #LOG.info(f"JSON payload: \n{json_payload}")
+    LOG.info("JSON payload: \n%s", json_payload)
 
     # Load a random image from the images folder
     file_names = next(os.walk(IMAGE_DIR))[2]
+    LOG.info("Input image list: \n%s", file_names)
     image = skimage.io.imread(os.path.join(IMAGE_DIR, random.choice(file_names)))
-    LOG.info("Input image: \n%s", file_images)
 
     # Run detection
     results = model.detect([image], verbose=1)
 
     # Visualize results
     r = results[0]
-    visualize.display_instances(image, r['rois'], r['masks'], r['class_ids'], 
+    #visualize.display_instances(image, r['rois'], r['masks'], r['class_ids'], 
+    #                            class_names, r['scores'])
+    display = display_instances(image, r['rois'], r['masks'], r['class_ids'], 
                                 class_names, r['scores'])
+    cv2.imwrite("src/img/mrcnn.jpg", display)
 
-    prediction = r['rois']
-    LOG.info("Output prediction value: %s", prediction)
+    labels = ''
+    for class_id in r['class_ids']:
+        labels = labels + ', ' + class_names[class_id]
+    LOG.info("Output class value: %s", labels)
 
-    return jsonify({'prediction': prediction})
+    #return jsonify({'prediction': prediction})
+    return jsonify({'labels': labels})
 
 if __name__ == "__main__":
 
