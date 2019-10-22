@@ -12,10 +12,12 @@ COPY . app.py /app/
 # Install packages from requirements.txt
 # hadolint ignore=DL3013
 RUN pip install --upgrade pip && pip install --trusted-host pypi.python.org -r requirements.txt
-RUN apt update; apt install nginx; 
+#RUN apt-get update; apt-get install nginx; 
 RUN git clone https://github.com/matterport/Mask_RCNN
 RUN git clone https://github.com/cocodataset/cocoapi
-RUN cd cocoapi/PythonAPI; python3 setup.py install; cd ../../
+WORKDIR /app/cocoapi/PythonAPI
+RUN python3 setup.py install
+WORKDIR /app
 
 ## Step 4:
 # Expose port 80
