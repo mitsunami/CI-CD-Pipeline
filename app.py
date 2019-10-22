@@ -5,11 +5,8 @@ import logging
 import os
 import sys
 import random
-import math
 import numpy as np
 import skimage.io
-import matplotlib
-import matplotlib.pyplot as plt
 import cv2
 import colorsys
 
@@ -18,7 +15,7 @@ ROOT_DIR = os.path.abspath("./Mask_RCNN/")
 sys.path.append(ROOT_DIR)
 from mrcnn import utils
 import mrcnn.model as modellib
-from mrcnn import visualize
+#from mrcnn import visualize
 
 # Import COCO config
 sys.path.append(os.path.join(ROOT_DIR, "samples/coco/")) # To find local version
@@ -82,9 +79,7 @@ def apply_mask(image, mask, color, alpha=0.5):
                                     image[:, :, c])
     return image
 
-def display_instances(image, boxes, masks, class_ids, class_names,
-                      scores=None, title="",
-                      figsize=(16, 16), ax=None):
+def display_instances(image, boxes, masks, class_ids, scores=None):
     N = boxes.shape[0]
     if not N:
         print("\n*** No instances to display *** \n")
@@ -108,7 +103,7 @@ def display_instances(image, boxes, masks, class_ids, class_names,
         class_id = class_ids[i]
         score = scores[i] if scores is not None else None
         label = class_names[class_id]
-        x = random.randint(x1, (x1 + x2) // 2)
+        #x = random.randint(x1, (x1 + x2) // 2)
         caption = "{} {:.3f}".format(label, score) if score else label
         camera_font = cv2.FONT_HERSHEY_PLAIN
         cv2.putText(masked_image,caption,(x1, y1),camera_font, 1, camera_color)
@@ -119,14 +114,16 @@ def display_instances(image, boxes, masks, class_ids, class_names,
  
     return masked_image.astype(np.uint8)
 
+"""
 def scale(payload):
-    """Scales Payload"""
+    # Scales Payload
     
     #LOG.info(f"Scaling Payload: \n{payload}")
     LOG.info("Scaling Payload: \n%s", payload)
     scaler = StandardScaler().fit(payload.astype(float))
     scaled_adhoc_predict = scaler.transform(payload.astype(float))
     return scaled_adhoc_predict
+"""
 
 @app.route("/")
 def home():
@@ -186,8 +183,7 @@ def predict():
     r = results[0]
     #visualize.display_instances(image, r['rois'], r['masks'], r['class_ids'], 
     #                            class_names, r['scores'])
-    display = display_instances(image, r['rois'], r['masks'], r['class_ids'], 
-                                class_names, r['scores'])
+    display = display_instances(image, r['rois'], r['masks'], r['class_ids'], r['scores'])
     cv2.imwrite("src/img/mrcnn.jpg", display)
 
     labels = ''

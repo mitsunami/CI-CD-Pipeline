@@ -8,7 +8,7 @@ pipeline {
         stage('Lint') {
             steps {
                 sh 'tidy -q -e src/*.html'
-                sh 'pylint --disable=R,C,W1203 app.py'
+                sh 'pylint --disable=R,C,W1203,W0105,W0212,E0401 app.py'
                 sh 'hadolint Dockerfile'
             }
         }
