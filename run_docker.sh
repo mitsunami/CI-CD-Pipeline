@@ -12,4 +12,4 @@ docker image ls
 
 # Step 3: 
 # Run flask app
-docker run --publish 8000:80 -it cicdpipeline bash
+docker run --publish 8000:80 -it cicdpipeline
