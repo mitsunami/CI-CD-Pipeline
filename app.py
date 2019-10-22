@@ -127,8 +127,9 @@ def scale(payload):
 
 @app.route("/")
 def home():
-    html = f"<h3>DeepLearning Object Detection</h3>"
-    return html.format(format)
+    #html = f"<h3>DeepLearning Object Detection</h3>"
+    #return html.format(format)
+    return
 
 @app.route('/showresult', methods = ['GET'])
 def showresult():
