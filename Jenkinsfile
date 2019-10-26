@@ -19,11 +19,6 @@ pipeline {
                 }
             }
         }
-        stage('Security Scan') {
-            steps { 
-                aquaMicroscanner imageName: 'cicdpipeline:latest', notCompliesCmd: 'exit 1', onDisallowed: 'fail'
-            }
-        }     
         stage('Push Docker') {
             steps {
                 script {
