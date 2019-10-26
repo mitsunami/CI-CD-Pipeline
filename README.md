@@ -20,9 +20,9 @@ Return value example:
 
 This project is using Jenkins to implement Countinuous Integration and Continuous Deployment.
 The Jenkins pipeline include: 
-    - Lint python scripts, HTML and Dockerfile
-    - Build Docker image
-    - Push the built Docker image to Docker repository
+* Lint python scripts, HTML and Dockerfile
+* Build Docker image
+* Push the built Docker image to Docker repository
 
 Deploying the Docker image should be run by executing scripts. For kubernetes cluster, AWS kubernetes as a Service is used with rolling update strategy. 
 
